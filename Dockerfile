@@ -19,8 +19,9 @@ RUN apt-get install -y libsqlite3-mod-spatialite python-all-dev git
 
 RUN git clone --recurse-submodules https://github.com/valhalla/valhalla.git
 
-# Copy poc demo utils to source code and update makefile to build them
+# Demo utility that uses existing functions from Valhalla code
 COPY valhalla_traffic_demo_utils.cc valhalla/src/mjolnir/valhalla_traffic_demo_utils.cc
+# New CmakeLists that includes the demo utility for building
 COPY CMakeLists.txt valhalla/CMakeLists.txt
 
 # Build valhalla
@@ -50,7 +51,7 @@ RUN cd valhalla_tiles; valhalla_ways_to_edges --config valhalla.json
 # 233161449,1,54660196776,1,54727305640,1,65028516264,1,81268861352,1,83818998184,1,95126841768,1,99824462248,1,100998867368,1,101133085096,1,107642644904,1,107709753768,1,108615723432,1,136633674152,1,136700783016,1,136767891880,1,138512722344,1,138646940072,1,138714048936,1,142539254184
 # Format is <osm_way_id>,[<direction: 0 | 1>, <valhalla_edge_id>]. An OSM way can be mapped to multiple valhalla edges, like in this case.
 
-# Generate a csv with speeds for the edges 516940010145 and 595558044321
+# Generate a csv with speeds for all edges
 # Format is edge_id, constrained flow speed (night), free flow speed (day), predicted traffic speeds. Simulate ok free traffic for night and day, but congestions in predicted traffic.
 RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54660196776`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` > traffic.csv
 RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54727305640`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv

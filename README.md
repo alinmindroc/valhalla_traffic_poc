@@ -1,18 +1,22 @@
 ## Intro
 
-Valhalla is a powerful routing engine, with time-dependent routing and traffic capabilities. 
-There are no official step-by-step instructions on how to add traffic support, only a description of the feature: https://valhalla.readthedocs.io/en/latest/thor/simple_traffic/
+Valhalla is an open source routing engine, with support for time-dependent routing and traffic. 
+It doesn't have at the moment any official step-by-step instructions on how to add traffic support, only a description of the feature: https://valhalla.readthedocs.io/en/latest/thor/simple_traffic/
 
-This repository shows how to create an instance of valhalla with traffic information based on existing tooling and a new tool `valhalla_traffic_demo_utils` that makes use of data structures and algorithms in the Valhalla source code.
+This repository shows how to create an instance of valhalla with traffic information (at the moment only predicted speeds, no live traffic yet).
+
+It uses existing tooling plus a new tool `valhalla_traffic_demo_utils` that makes use of data structures and algorithms in the Valhalla source code.
 
 ## How to run
 
-1. Build docker image (takes around 10 min) `docker build -t valhalla-traffic .`
+1. Build docker image `docker build -t valhalla-traffic .`
+    * (takes around 10 min, as it downloads + processes the OSM map for the whole country of Estonia)
 1. Start container `docker run -p 8002:8002 -it valhalla-traffic bash`
+    * The port forwarding is important for the demos below
 2. Inside the container, start the server `valhalla_service /valhalla_tiles/valhalla.json 1`
 3. Check interactive demo based on the locally running valhalla: https://valhalla.github.io/demos/routing/index-internal.html#loc=15,59.429276,24.776402
     * __Left click__ to place origin / destination for routing
-    * __Right click__ to get edge info
+    * __Right click__ to get node/edge info
 
 OSM way for which traffic is slowed down: https://www.openstreetmap.org/way/233161449#map=15/59.4302/24.7748
 ![OSM way](osm_way.png?raw=true "OSM way")
