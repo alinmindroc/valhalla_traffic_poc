@@ -20,9 +20,11 @@ RUN apt-get install -y libsqlite3-mod-spatialite python-all-dev git
 RUN git clone --recurse-submodules https://github.com/valhalla/valhalla.git
 
 # Demo utility that uses existing functions from Valhalla code
-COPY valhalla_traffic_demo_utils.cc valhalla/src/mjolnir/valhalla_traffic_demo_utils.cc
-# New CmakeLists that includes the demo utility for building
-COPY CMakeLists.txt valhalla/CMakeLists.txt
+COPY valhalla_code_overwrites/src/mjolnir/valhalla_traffic_demo_utils.cc valhalla/src/mjolnir/valhalla_traffic_demo_utils.cc
+# New CMakeLists that adds valhalla_traffic_demo_utils to the build list
+COPY valhalla_code_overwrites/CMakeLists.txt valhalla/CMakeLists.txt
+# New src CMakeLists that adds microtar library dependency for the demo utility
+COPY valhalla_code_overwrites/src/CMakeLists.txt valhalla/src/CMakeLists.txt
 
 # Build valhalla
 RUN mkdir valhalla/build
@@ -34,9 +36,13 @@ RUN cd valhalla/build; make install
 RUN mkdir valhalla_tiles
 RUN cd valhalla_tiles; wget https://download.geofabrik.de/europe/estonia-latest.osm.pbf -O estonia.osm.pbf
 # The config is generated without --mjolnir-tile-extract ${PWD}/valhalla_tiles.tar, as traffic routing only works without this
-RUN cd valhalla_tiles; valhalla_build_config --mjolnir-tile-dir ${PWD}/valhalla_tiles --mjolnir-timezone ${PWD}/valhalla_tiles/timezones.sqlite --mjolnir-admin ${PWD}/valhalla_tiles/admins.sqlite > valhalla.json
+RUN cd valhalla_tiles; valhalla_build_config --mjolnir-tile-dir ${PWD}/valhalla_tiles --mjolnir-timezone ${PWD}/valhalla_tiles/timezones.sqlite --mjolnir-admin ${PWD}/valhalla_tiles/admins.sqlite --mjolnir-traffic-extract ${PWD}/traffic.tar > valhalla.json
 RUN cd valhalla_tiles; valhalla_build_tiles -c valhalla.json estonia.osm.pbf
 RUN cd valhalla_tiles; find valhalla_tiles | sort -n | tar cf valhalla_tiles.tar --no-recursion -T -
+
+
+###### Add predicted traffic information
+
 
 # Update routing tiles with traffic information
 # Create hierarchy of directories for traffic tiles with the same structure as the graph tiles
@@ -45,36 +51,24 @@ RUN cd /valhalla_tiles; mkdir traffic; cd valhalla_tiles; find . -type d -exec m
 # Generate osm ways to valhalla edges mapping:
 RUN cd valhalla_tiles; valhalla_ways_to_edges --config valhalla.json
 # ^ This generates a file with mappings at valhalla_tiles/ways_edges.txt. The warning about traffic can be safely ignored.
+
 # In order to find the osm id of a way, go to osm editor, edit, click on road, view on openstreetmap.org, check URL
 # Let's update the traffic for openstreetmap.org/way/233161449
-# The mapping in ways_to_edges.txt is:
-# 233161449,1,54660196776,1,54727305640,1,65028516264,1,81268861352,1,83818998184,1,95126841768,1,99824462248,1,100998867368,1,101133085096,1,107642644904,1,107709753768,1,108615723432,1,136633674152,1,136700783016,1,136767891880,1,138512722344,1,138646940072,1,138714048936,1,142539254184
-# Format is <osm_way_id>,[<direction: 0 | 1>, <valhalla_edge_id>]. An OSM way can be mapped to multiple valhalla edges, like in this case.
-
 # Generate a csv with speeds for all edges
-# Format is edge_id, constrained flow speed (night), free flow speed (day), predicted traffic speeds. Simulate ok free traffic for night and day, but congestions in predicted traffic.
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54660196776`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` > traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54727305640`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 65028516264`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 81268861352`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 83818998184`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 95126841768`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 99824462248`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 100998867368`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 101133085096`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 107642644904`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 107709753768`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 108615723432`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136633674152`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136700783016`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136767891880`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138512722344`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138646940072`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138714048936`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 142539254184`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+COPY update_traffic.py valhalla_tiles/traffic/update_traffic.py
+RUN cd /valhalla_tiles/traffic; python3 update_traffic.py 233161449 /valhalla_tiles/valhalla_tiles/way_edges.txt
 
-# Move the edge to the expected location in the tile hierarchy (all edges have the same tile id)
-RUN cd /valhalla_tiles/traffic; mv traffic.csv `valhalla_traffic_demo_utils --get-traffic-dir 54660196776`
+# Move the csv file to the expected location in the tile hierarchy
+# All valhalla edges for this osm way id have the same tile id, so just get the first one from the mapping
+RUN cd /valhalla_tiles/traffic; \
+    edge_id=`grep 233161449 /valhalla_tiles/valhalla_tiles/way_edges.txt | cut -d ',' -f3`; \
+    mv traffic.csv `valhalla_traffic_demo_utils --get-traffic-dir $edge_id`
 
 # Add traffic information to the routing tiles
 RUN cd /valhalla_tiles; valhalla_add_predicted_traffic -t traffic --config valhalla.json
+
+
+###### Add live traffic information
+
+
+RUN valhalla_traffic_demo_utils --config /valhalla_tiles/valhalla.json --generate-live-traffic 0/3381/0 20 `date +%s`

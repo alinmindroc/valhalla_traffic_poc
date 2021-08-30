@@ -19,13 +19,13 @@ It uses existing tooling plus a new tool `valhalla_traffic_demo_utils` that make
     * __Right click__ to get node/edge info
 
 OSM way for which traffic is slowed down: https://www.openstreetmap.org/way/233161449#map=15/59.4302/24.7748
-![OSM way](osm_way.png?raw=true "OSM way")
+![OSM way](screenshots/osm_way.png?raw=true "OSM way")
 
 Valhalla avoiding the way when time-dependent routing is requested (Available in routing options):
-![OSM way](with_date_time.png?raw=true "OSM way")
+![OSM way](screenshots/with_date_time.png?raw=true "OSM way")
 
 Valhalla using the way when time-dependent routing is not requested:
-![OSM way](without_date_time.png?raw=true "OSM way")
+![OSM way](screenshots/without_date_time.png?raw=true "OSM way")
 
 ## Other info
 

@@ -20,7 +20,11 @@ namespace vj = valhalla::mjolnir;
 
 namespace bpo = boost::program_options;
 
-// Copied from valhalla/test/test.cc
+/*
+Logic copied from valhalla/test/test.cc
+This creates a tar file with live traffic information and sets the given constant_encoded_speed to all edges present in the tile.
+In a production environment, as only specific edges will have known live speeds, the rest can be set with speeds of 0, as those will be ignored.
+*/
 void build_live_traffic_data(const boost::property_tree::ptree& config,
                              std::string tile_id,
                              uint32_t constant_encoded_speed,
@@ -178,6 +182,7 @@ int main(int argc, char** argv) {
 
     build_live_traffic_data(pt, tile_id, encoded_speed, traffic_update_timestamp);
     std::cout << "Generated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract") << "\n";
+    return EXIT_SUCCESS;
   }
 
   return EXIT_FAILURE;
