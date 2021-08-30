@@ -1,13 +1,15 @@
 ## Intro
 
 Valhalla is an open source routing engine, with support for time-dependent routing and traffic. 
+
 It doesn't have at the moment any official step-by-step instructions on how to add traffic support, only a description of the feature: https://valhalla.readthedocs.io/en/latest/thor/simple_traffic/
 
-This repository shows how to create an instance of valhalla with both types of supported traffic information:
-1. __Predicted traffic__, used for time-based routing (e.g. _find me a route between A and B that leaves tomorrow at 12:00_). This is done through a CSV which contains encoded speeds for a whole week for a given edge.
-2. __Live traffic__, used for real-time decisions, and which can be set dynamically. This is done through a traffic.tar file that is memory mapped by valhalla.  
+This repository shows how to create an instance of Valhalla with both types of supported traffic information:
+1. __Predicted traffic__, used for time-based routing (e.g. _find a route between A and B that leaves tomorrow at 12:00_). This is done through a CSV which contains encoded speeds for a whole week for a given Valhalla graph edge.
+2. __Live traffic__, used for real-time decisions, and which can be set dynamically. This is done through a `traffic.tar` file that is memory mapped by Valhalla.  
 
-It uses existing tooling plus a new tool `valhalla_traffic_demo_utils` that makes use of data structures and algorithms in the Valhalla source code.
+The files needed for the two types of traffic are generated using a new tool `valhalla_traffic_demo_utils`.
+This has similar interface to existing Valhalla tools and makes use of data structures and algorithms in the Valhalla source code.
 
 ## How to run
 
@@ -16,13 +18,40 @@ It uses existing tooling plus a new tool `valhalla_traffic_demo_utils` that make
 2. Start container `docker run -p 8002:8002 -it valhalla-traffic bash`
     * The port forwarding is important for the demos below
 3. Inside the container, start the server `valhalla_service /valhalla_tiles/valhalla.json 1`
-4. Verify that Valhalla processed the traffic information correctly, by querying the way which we updated (or using the interactive demo in the next step):
+4. Verify that Valhalla processed the traffic information correctly, by querying the Valhalla graph edge which we updated (or using the interactive demo in the next step):
 ```
 curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq
 ```
 One of the ways returned by the query should contain a non-empty `predicted_speeds` array for predicted traffic, and a `live_speed` object for live traffic. This means that Valhalla has the traffic information available.
+
+Example:
+```
+[
+   {
+      "input_lon":24.771085,
+      "input_lat":59.430463,
+      "edges":[
+         {
+            "predicted_speeds":[6, 6, 6, 6, 6, 6, ... ],
+            "edge_info":{
+               "way_id":233161449,
+               ...
+            },
+            "live_speed":{
+               "congestion_2":0.08,
+               "breakpoint_1":0.03,
+               "congestion_1":0.08,
+               "speed_1":40,
+               "congestion_0":0.08,
+               "speed_2":40,
+               "breakpoint_0":0.03,
+               "speed_0":40,
+               "overall_speed":40
+            }
+      ...
+```
    
-5. Check interactive demo based on the locally running valhalla: https://valhalla.github.io/demos/routing/index-internal.html#loc=15,59.429276,24.776402
+5. Check interactive demo (uses the locally running instante of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,59.429276,24.776402
     * __Left click__ to place origin / destination for routing
     * __Right click__ to query node/edge info
 
@@ -47,7 +76,7 @@ The free flow and constrained flow speeds are used by default by the routing API
 In order to use the predicted traffic information, the `date_time` parameter needs to be set in the route request.  
 
 ### Live traffic
-For live traffic there are some more rules. Check the `GetSpeed` function in `baldr/graphtile.h` for the conditions.
+Check the `GetSpeed` function in `baldr/graphtile.h` for validation of live traffic data.
 
 ## Other example requests:
 
