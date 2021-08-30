@@ -53,25 +53,25 @@ RUN cd valhalla_tiles; valhalla_ways_to_edges --config valhalla.json
 
 # Generate a csv with speeds for all edges
 # Format is edge_id, constrained flow speed (night), free flow speed (day), predicted traffic speeds. Simulate ok free traffic for night and day, but congestions in predicted traffic.
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54660196776`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` > traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54727305640`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 65028516264`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 81268861352`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 83818998184`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 95126841768`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 99824462248`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 100998867368`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 101133085096`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 107642644904`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 107709753768`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 108615723432`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136633674152`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136700783016`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136767891880`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138512722344`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138646940072`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138714048936`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
-RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 142539254184`,60,50,`valhalla_traffic_demo_utils --get-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54660196776`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` > traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 54727305640`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 65028516264`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 81268861352`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 83818998184`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 95126841768`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 99824462248`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 100998867368`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 101133085096`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 107642644904`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 107709753768`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 108615723432`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136633674152`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136700783016`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 136767891880`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138512722344`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138646940072`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 138714048936`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
+RUN cd /valhalla_tiles/traffic; echo `valhalla_traffic_demo_utils --get-tile-id 142539254184`,60,50,`valhalla_traffic_demo_utils --generate-predicted-traffic 6` >> traffic.csv
 
 # Move the edge to the expected location in the tile hierarchy (all edges have the same tile id)
 RUN cd /valhalla_tiles/traffic; mv traffic.csv `valhalla_traffic_demo_utils --get-traffic-dir 54660196776`
