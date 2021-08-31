@@ -50,10 +50,31 @@ Example:
             }
       ...
 ```
-   
-5. Check interactive demo (uses the locally running instante of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,59.429276,24.776402
-    * __Left click__ to place origin / destination for routing
-    * __Right click__ to query node/edge info
+5. Check interactive demo (uses the locally running instance of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,59.429276,24.776402
+   * __Left click__ to place origin / destination for routing
+   * __Right click__ to query node/edge info
+6. Do a live update of the traffic speeds and check how it is picked up automatically:
+   * For some reason, the tar file has to be customized before starting the service in order for the changes to be picked up automatically. Probably has something to do with how the memory mapping works.
+   * Do a dummy customization with live speed 0, so basically unsetting live speeds:
+     ```
+     valhalla_traffic_demo_utils --config /valhalla_tiles/valhalla.json --update-live-traffic 0
+     ```
+   * Restart the service:
+      ```
+      valhalla_service /valhalla_tiles/valhalla.json 1
+      ```
+   * Confirm that live speeds are not available 
+      ```
+     curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq | grep overall_speed
+     ```
+   * Customize with new values
+     ```
+     valhalla_traffic_demo_utils --config /valhalla_tiles/valhalla.json --update-live-traffic 30
+     ```
+   * Check the live speeds again, should be available now
+      ```
+     curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq | grep overall_speed
+     ```
 
 ## Examples
 

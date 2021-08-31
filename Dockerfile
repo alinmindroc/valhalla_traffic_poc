@@ -35,8 +35,12 @@ RUN cd valhalla/build; make install
 # Generate routing tiles
 RUN mkdir valhalla_tiles
 RUN cd valhalla_tiles; wget https://download.geofabrik.de/europe/estonia-latest.osm.pbf -O estonia.osm.pbf
-# The config is generated without --mjolnir-tile-extract ${PWD}/valhalla_tiles.tar, as traffic routing only works without this
-RUN cd valhalla_tiles; valhalla_build_config --mjolnir-tile-dir ${PWD}/valhalla_tiles --mjolnir-timezone ${PWD}/valhalla_tiles/timezones.sqlite --mjolnir-admin ${PWD}/valhalla_tiles/admins.sqlite --mjolnir-traffic-extract ${PWD}/traffic.tar > valhalla.json
+
+# Generate the config
+RUN cd valhalla_tiles; valhalla_build_config --mjolnir-tile-dir ${PWD}/valhalla_tiles --mjolnir-timezone ${PWD}/valhalla_tiles/timezones.sqlite --mjolnir-admin ${PWD}/valhalla_tiles/admins.sqlite --mjolnir-traffic-extract ${PWD}/traffic.tar > valhalla_raw.json
+# Remove unused options to keep service output clean of errors
+RUN cd valhalla_tiles; sed -e '/elevation/d' -e '/tile_extract/d' valhalla_raw.json > valhalla.json
+
 RUN cd valhalla_tiles; valhalla_build_tiles -c valhalla.json estonia.osm.pbf
 RUN cd valhalla_tiles; find valhalla_tiles | sort -n | tar cf valhalla_tiles.tar --no-recursion -T -
 
@@ -70,5 +74,5 @@ RUN cd /valhalla_tiles; valhalla_add_predicted_traffic -t traffic --config valha
 
 ###### Add live traffic information
 
-
+# Generate the traffic archive
 RUN valhalla_traffic_demo_utils --config /valhalla_tiles/valhalla.json --generate-live-traffic 0/3381/0 20 `date +%s`
