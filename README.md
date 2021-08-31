@@ -114,12 +114,11 @@ Decode polyline6: http://valhalla.github.io/demos/polyline/
 
 ### DistanceMatrix:
 ```
-curl http://localhost:8002/sources_to_targets --data '{"sources":[{"lat":59.431,"lon":24.768},{"lat":59.43,"lon":24.776},{"lat":59.433851,"lon":24.770216}], "targets":[{"lat":59.429696,"lon":24.759521},{"lat":59.424097,"lon":24.778592},{"lat":59.42268,"lon":24.745916}],"costing":"auto","directions_options":{"units":"kilometers"}}' | jq
+curl http://localhost:8002/sources_to_targets --data '{"sources":[{"lat":59.431,"lon":24.768},{"lat":59.43,"lon":24.776},{"lat":59.433851,"lon":24.770216}], "targets":[{"lat":59.429696,"lon":24.759521},{"lat":59.424097,"lon":24.778592},{"lat":59.42268,"lon":24.745916}],"costing":"auto","directions_options":{"units":"kilometers"},"date_time":{"type":1,"value":"2021-08-30T23:50"}}' | jq
 ```
-View isochrone: http://geojson.io/
 
 ### Isochrone:
-
 ```
 curl http://localhost:8002/isochrone --data '{"locations":[{"lat":59.431,"lon":24.768}],"costing":"auto","contours":[{"time":5,"color":"ff0000"}],"date_time":{"type":1,"value":"2021-09-30T23:50"}}'
 ```
+View isochrone: http://geojson.io/
