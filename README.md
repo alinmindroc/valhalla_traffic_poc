@@ -22,7 +22,7 @@ This has similar interface to existing Valhalla tools and makes use of data stru
 ```
 curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq
 ```
-One of the ways returned by the query should contain a non-empty `predicted_speeds` array for predicted traffic, and a `live_speed` object for live traffic. This means that Valhalla has the traffic information available.
+One of the ways returned by the query should contain a non-empty `predicted_speeds` array for predicted traffic, and a non-empty `live_speed` object for live traffic. This means that Valhalla has the traffic information available.
 
 Example:
 ```
@@ -76,16 +76,21 @@ Example:
      curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq | grep overall_speed
      ```
 
-## Examples
+## Predicted traffic Demo
 
-OSM way which has slowed down predicted traffic: https://www.openstreetmap.org/way/233161449#map=15/59.4302/24.7748
+The predicted traffic for the following OSM way is slowed as part of the Dockerfile commands: https://www.openstreetmap.org/way/233161449#map=15/59.4302/24.7748
 ![OSM way](screenshots/osm_way.png?raw=true "OSM way")
 
-Valhalla avoiding the way when requested time-dependent routing (Available in routing options):
-![OSM way](screenshots/with_date_time.png?raw=true "OSM way")
+As live traffic has priority over predicted traffic, make sure all live traffic speeds are set to 0, so they are ignored:
+```
+valhalla_traffic_demo_utils --config /valhalla_tiles/valhalla.json --update-live-traffic 0
+```
 
-Valhalla using the way when requested simple, non time-dependent routing:
+When requested simple, non-time-dependent routing, Valhalla uses the way:
 ![OSM way](screenshots/without_date_time.png?raw=true "OSM way")
+
+When requested time-dependent routing (Can be set in routing options in the demo), Valhalla avoids the way:
+![OSM way](screenshots/with_date_time.png?raw=true "OSM way")
 
 ## Other gotchas
 
