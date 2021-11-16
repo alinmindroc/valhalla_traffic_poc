@@ -13,8 +13,6 @@ RUN apt-get update
 RUN apt-get install -y cmake make libtool pkg-config g++ gcc curl unzip jq lcov protobuf-compiler vim-common locales libboost-all-dev libcurl4-openssl-dev zlib1g-dev liblz4-dev libprime-server-dev libprotobuf-dev prime-server-bin
 RUN apt-get install -y libgeos-dev libgeos++-dev libluajit-5.1-dev libspatialite-dev libsqlite3-dev wget sqlite3 spatialite-bin
 RUN apt-get install -y python-is-python3
-
-RUN if [[ $(python -c "print(int($DISTRIB_RELEASE > 15))") > 0 ]]; then sudo apt-get install -y libsqlite3-mod-spatialite; fi
 RUN apt-get install -y libsqlite3-mod-spatialite python-all-dev git
 
 RUN git clone --recurse-submodules https://github.com/valhalla/valhalla.git

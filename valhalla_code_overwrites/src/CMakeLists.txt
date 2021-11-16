@@ -108,7 +108,7 @@ function(valhalla_module)
   # These options do not affect the ABI and should therefore be used whenever possible for
   # predictable numerical results
   # For the x86-64 compiler, these extensions are enabled by default.
-  if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64|AMD64|x64|x86|x86_64")
+  if(CMAKE_SYSTEM_PROCESSOR MATCHES "amd64|AMD64|x64|x86|x86_64" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES "arm64")
     target_add_compile_flags_if_supported(${library} PRIVATE -mfpmath=sse -msse2)
   endif()
 
@@ -256,7 +256,7 @@ if(BUILD_SHARED_LIBS)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBVALHALLA_SO_LINK}
     DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     COMPONENT development)
-  
+
   if(UNIX)
     add_custom_target(${LIBVALHALLA_SO_LINK} ALL
       COMMAND ${CMAKE_COMMAND} -E create_symlink "${LIBVALHALLA_SO_LINK}.${VALHALLA_VERSION_MAJOR}" ${LIBVALHALLA_SO_LINK})
