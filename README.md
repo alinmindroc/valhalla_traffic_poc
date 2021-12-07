@@ -126,3 +126,29 @@ View isochrone: http://geojson.io/
 ### Locate
 Used to match a single point to the nearest road:
 http://valhalla.github.io/demos/locate/
+
+Or cmd line:
+
+```
+curl http://localhost:8002/locate --data '{"locations":[{"lat":59.429385,"lon":24.757191},{"lat":59.429214,"lon":24.757529}]}'
+```
+
+### Map match
+
+```
+curl http://localhost:8002/trace_route --data '{"shape":[{"lat":59.429385,"lon":24.757191,"type":"break"},{"lat":59.429214,"lon":24.757529,"type":"break"}],"costing":"auto","shape_match":"map_snap"}'
+
+curl http://localhost:8002/trace_attributes --data '{"shape":[{"lat":59.429385,"lon":24.757191,"type":"break"},{"lat":59.429214,"lon":24.757529,"type":"break"}],"costing":"auto","shape_match":"map_snap"}'
+```
+
+## Possible workflow for generating traffic based on lat/lng input data
+Let's assume that the traffic information has to be generated based on some input data in the form of a list of raw acquired speeds for a given lat/lng point.
+
+In order to get the valhalla way id of an array of lat/lng pairs, the following request can be used:
+```
+curl http://localhost:8002/trace_attributes --data '{"shape":[{"lat":<lat>,"lon":<lng>},{"lat":<lat>,"lon":<lng>}, ... ],"costing":"auto","shape_match":"map_snap","filters":{"attributes":["edge.names","edge.id", "edge.weighted_grade","edge.speed", "edge.way_id", "edge.length", "edge.traversability", "edge.density", "matched.distance_along_edge", "matched.edge_index", "matched.distance_from_trace_point"],"action":"include"}}' | jq
+```
+
+This will return for each point in the "shape" array an edge index, which can be used to get the way id from the same response.
+
+After having the way id for each point, just follow the Dockerfile steps, ignoring the usage of the `way_edges.txt` mapping.  

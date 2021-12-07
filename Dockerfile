@@ -52,7 +52,7 @@ RUN cd /valhalla_tiles; mkdir traffic; cd valhalla_tiles; find . -type d -exec m
 
 # Generate osm ways to valhalla edges mapping:
 RUN cd valhalla_tiles; valhalla_ways_to_edges --config valhalla.json
-# ^ This generates a file with mappings at valhalla_tiles/ways_edges.txt. The warning about traffic can be safely ignored.
+# ^ This generates a file with mappings at valhalla_tiles/way_edges.txt. The warning about traffic can be safely ignored.
 
 # In order to find the osm id of a way, go to osm editor, edit, click on road, view on openstreetmap.org, check URL
 # Let's update the traffic for openstreetmap.org/way/233161449
