@@ -152,3 +152,31 @@ curl http://localhost:8002/trace_attributes --data '{"shape":[{"lat":<lat>,"lon"
 This will return for each point in the "shape" array an edge index, which can be used to get the way id from the same response.
 
 After having the way id for each point, just follow the Dockerfile steps, ignoring the usage of the `way_edges.txt` mapping.  
+
+## Fixed Valhalla commit
+`valhalla_traffic_demo_utils.cc` needs to be compiled as part of the main `cmake` + `make` calls.
+
+Due to this, I have added two custom CmakeLists, which change from time to time in the upstream repository. 
+Because the Valhalla repository is updated frequently, in order to remove the risk of future the breaking changes, a fixed commit is used to build Valhalla.
+
+The two required changes CmakeLists are as follows:
+* The CMakeLists under `src/` should add the microtar library, which is used by `valhalla_traffic_demo_utils`:
+  ```
+  target_include_directories(valhalla
+  PUBLIC
+  ${VALHALLA_SOURCE_DIR}
+  ...
+  ${VALHALLA_SOURCE_DIR}/third_party/microtar/src
+  ```
+  and
+  ```
+  add_library(valhalla ${valhalla_src} ${VALHALLA_SOURCE_DIR}/third_party/microtar/src/microtar.h
+  ${VALHALLA_SOURCE_DIR}/third_party/microtar/src/microtar.c)
+  ```
+* The CmakeLists in the root of the project should also contain `valhalla_traffic_demo_utils` as part of the `valhalla_data_tools`, for example:
+  ```
+  set(valhalla_data_tools valhalla_build_statistics valhalla_ways_to_edges valhalla_validate_transit
+  valhalla_benchmark_admins valhalla_build_connectivity	valhalla_build_tiles valhalla_build_admins
+  valhalla_convert_transit valhalla_fetch_transit valhalla_query_transit valhalla_add_predicted_traffic
+  valhalla_assign_speeds valhalla_traffic_demo_utils)
+  ```

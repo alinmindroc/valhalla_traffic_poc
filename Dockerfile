@@ -15,7 +15,10 @@ RUN apt-get install -y libgeos-dev libgeos++-dev libluajit-5.1-dev libspatialite
 RUN apt-get install -y python-is-python3
 RUN apt-get install -y libsqlite3-mod-spatialite python-all-dev git
 
-RUN git clone --recurse-submodules https://github.com/valhalla/valhalla.git
+RUN git clone https://github.com/valhalla/valhalla.git
+# Use a specific commit to avoid breaking this process in the future. Check the readme for details
+RUN cd valhalla; git reset --hard 56167abd14354094cbdbb4b4bc28bee593638fe5
+RUN cd valhalla; git submodule update --init --recursive
 
 # Demo utility that uses existing functions from Valhalla code
 COPY valhalla_code_overwrites/src/mjolnir/valhalla_traffic_demo_utils.cc valhalla/src/mjolnir/valhalla_traffic_demo_utils.cc
@@ -73,4 +76,4 @@ RUN cd /valhalla_tiles; valhalla_add_predicted_traffic -t traffic --config valha
 ###### Add live traffic information
 
 # Generate the traffic archive
-RUN valhalla_traffic_demo_utils --config /valhalla_tiles/valhalla.json --generate-live-traffic 0/3381/0 20 `date +%s`
+RUN valhalla_traffic_demo_utils --config /valhalla_tiles/valhalla.json --generate-live-traffic 0/3381/0,20,`date +%s`

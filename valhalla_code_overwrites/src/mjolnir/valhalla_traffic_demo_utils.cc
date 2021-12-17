@@ -5,7 +5,7 @@
 #include "mjolnir/graphtilebuilder.h"
 
 #include <cstdint>
-#include <boost/program_options.hpp>
+#include <cxxopts.hpp>
 
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
@@ -17,8 +17,6 @@
 namespace vm = valhalla::midgard;
 namespace vb = valhalla::baldr;
 namespace vj = valhalla::mjolnir;
-
-namespace bpo = boost::program_options;
 
 // Mmap and mtar structs copied from test/test.cc
 struct MMap {
@@ -190,109 +188,109 @@ void customize_live_traffic_data(const boost::property_tree::ptree& config,
 }
 
 int main(int argc, char** argv) {
+  //args
   uint64_t way_id;
   float predicted_speed;
   uint32_t live_speed;
   std::string config_file_path;
-  std::vector<std::string> live_trafic_params;
-
-  bpo::options_description options("valhalla_traffic_demo_utils \n"
-                                   "\n"
-                                   " Usage: valhalla_traffic_demo_utils [options]\n"
-                                   "\n"
-                                   "provides utils for adding traffic to valhalla routing tiles. "
-                                   "\n"
-                                   "\n");
-
-  options.add_options()
-      ("help,h", "Print this help message.")
-      ("config,c", boost::program_options::value<std::string>(&config_file_path), "Path to the json configuration file.")
-      ("get-traffic-dir", bpo::value<uint64_t>(&way_id),"Get the traffic tile dir path of an edge id.")
-      ("get-tile-id", bpo::value<uint64_t>(&way_id),"Get the tile id of an edge id.")
-      ("generate-predicted-traffic", bpo::value<float>(&predicted_speed),"Generate base64 for an array of speeds filled with a given constant value.")
-      ("generate-live-traffic", bpo::value<std::vector<std::string>>(&live_trafic_params)->multitoken(),"Generate a traffic.tar archive with speed in live traffic format"
-             "for a given tile and with a given constant value.\nUsage: --generate-live-traffic <tile_id> <speed_in_kmph> <time of traffic in seconds since epoch>.\n"
-             "The tile id is a way id with the tile part set to 0, e.g. for way id 0/3381/123, tile id is 0/3381/0.")
-      ("update-live-traffic", bpo::value<uint32_t>(&live_speed),"Update all edges in an existing traffic.tar archive with the given speed\n"
-             "Usage: --update-live-traffic <speed_in_kmph>.\n");
-
-  bpo::variables_map vm;
   try {
-    bpo::store(bpo::command_line_parser(argc, argv).options(options).run(),
-               vm);
-    bpo::notify(vm);
-  } catch (std::exception& e) {
+    // clang-format off
+    cxxopts::Options options(argv[0],
+                             " - Provides utilities for adding traffic to valhalla routing tiles.");
+
+    options.add_options()
+        ("h,help", "Print this help message.")
+        ("c,config", "Path to the json configuration file.",
+            cxxopts::value<std::string>(config_file_path))
+        ("get-traffic-dir", "Get the traffic tile dir path of an edge id.",
+            cxxopts::value<uint64_t>(way_id))
+        ("get-tile-id", "Get the tile id of an edge id.",
+            cxxopts::value<uint64_t>(way_id))
+        ("generate-predicted-traffic", "Generate base64 for an array of speeds filled with a given constant value.",
+            cxxopts::value<float>(predicted_speed))
+        ("generate-live-traffic", "Generate a traffic.tar archive with speed in live traffic format for a given tile and with a given constant value. Usage: --generate-live-traffic <tile_id>,<speed_in_kmph>,<time of traffic in seconds since epoch>. The tile id is a way id with the tile part set to 0, e.g. for way id 0/3381/123, tile id is 0/3381/0.",
+            cxxopts::value<std::vector<std::string>>())
+        ("update-live-traffic", "Update all edges in an existing traffic.tar archive with the given speed. Usage: --update-live-traffic <speed_in_kmph>.",
+            cxxopts::value<uint32_t>(live_speed));
+    // clang-format on
+
+    auto result = options.parse(argc, argv);
+
+    if (result.count("help")) {
+      std::cout << options.help() << "\n";
+      return EXIT_SUCCESS;
+    }
+
+    if (result.count("get-traffic-dir")) {
+      valhalla::baldr::GraphId graph_id(way_id);
+      auto tile_path = GraphTile::FileSuffix(graph_id);
+      auto dir = filesystem::path(tile_path);
+      auto dir_str = dir.string();
+      boost::replace_all(dir_str, ".gph", ".csv");
+      std::cout << dir_str << "\n";
+
+      return EXIT_SUCCESS;
+    }
+
+    if (result.count("get-tile-id")) {
+      valhalla::baldr::GraphId graph_id(way_id);
+      std::cout << graph_id << "\n";
+
+      return EXIT_SUCCESS;
+    }
+
+    if (result.count("generate-predicted-traffic")) {
+      const int five_minute_buckets_per_week_count = 7 * 24 * 60 / 5;
+      std::array<float, five_minute_buckets_per_week_count> historical{};
+      historical.fill(predicted_speed);
+
+      auto speeds = valhalla::baldr::compress_speed_buckets(historical.data());
+      std::cout << valhalla::baldr::encode_compressed_speeds(speeds.data()) << "\n";
+
+      return EXIT_SUCCESS;
+    }
+
+    if (result.count("generate-live-traffic")) {
+      // Read the config file
+      boost::property_tree::ptree pt;
+      if (result.count("config") && filesystem::is_regular_file(config_file_path)) {
+        rapidjson::read_json(config_file_path, pt);
+      } else {
+        std::cerr << "Configuration is required\n\n";
+        return EXIT_FAILURE;
+      }
+
+      std::vector<std::string> live_trafic_params = result["generate-live-traffic"].as<std::vector<std::string>>();
+
+      std::string tile_id = live_trafic_params[0];
+      uint32_t encoded_speed = static_cast<uint32_t>(std::stoul(live_trafic_params[1]));
+      uint64_t traffic_update_timestamp = static_cast<uint32_t>(std::stoul(live_trafic_params[2]));
+
+      build_live_traffic_data(pt, tile_id, encoded_speed, traffic_update_timestamp);
+      std::cout << "Generated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract") << "\n";
+      return EXIT_SUCCESS;
+    }
+
+    if (result.count("update-live-traffic")) {
+      // Read the config file
+      boost::property_tree::ptree pt;
+      if (result.count("config") && filesystem::is_regular_file(config_file_path)) {
+        rapidjson::read_json(config_file_path, pt);
+      } else {
+        std::cerr << "Configuration is required\n\n";
+        return EXIT_FAILURE;
+      }
+
+      customize_live_traffic_data(pt, live_speed);
+      std::cout << "Updated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract") << "\n";
+      return EXIT_SUCCESS;
+    }
+
+    std::cout << options.help() << "\n";
+
+  } catch (cxxopts::OptionException& e) {
     std::cerr << "Unable to parse command line options because: " << e.what() << "\n";
     return EXIT_FAILURE;
   }
-
-  if (vm.count("help") || vm.empty()) {
-    std::cout << options << "\n";
-    return EXIT_SUCCESS;
-  }
-
-  if (vm.count("get-traffic-dir")) {
-    valhalla::baldr::GraphId graph_id(way_id);
-    auto tile_path = GraphTile::FileSuffix(graph_id);
-    auto dir = filesystem::path(tile_path);
-    auto dir_str = dir.string();
-    boost::replace_all(dir_str, ".gph", ".csv");
-    std::cout << dir_str << "\n";
-
-    return EXIT_SUCCESS;
-  }
-
-  if (vm.count("get-tile-id")) {
-    valhalla::baldr::GraphId graph_id(way_id);
-    std::cout << graph_id << "\n";
-
-    return EXIT_SUCCESS;
-  }
-
-  if (vm.count("generate-predicted-traffic")) {
-    const int five_minute_buckets_per_week_count = 7 * 24 * 60 / 5;
-    std::array<float, five_minute_buckets_per_week_count> historical{};
-    historical.fill(predicted_speed);
-
-    auto speeds = valhalla::baldr::compress_speed_buckets(historical.data());
-    std::cout << valhalla::baldr::encode_compressed_speeds(speeds.data()) << "\n";
-
-    return EXIT_SUCCESS;
-  }
-
-  if (vm.count("generate-live-traffic")) {
-    // Read the config file
-    boost::property_tree::ptree pt;
-    if (vm.count("config") && filesystem::is_regular_file(config_file_path)) {
-      rapidjson::read_json(config_file_path, pt);
-    } else {
-      std::cerr << "Configuration is required\n\n";
-      return EXIT_FAILURE;
-    }
-
-    std::string tile_id = live_trafic_params[0];
-    uint32_t encoded_speed = static_cast<uint32_t>(std::stoul(live_trafic_params[1]));
-    uint64_t traffic_update_timestamp = static_cast<uint32_t>(std::stoul(live_trafic_params[2]));
-
-    build_live_traffic_data(pt, tile_id, encoded_speed, traffic_update_timestamp);
-    std::cout << "Generated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract") << "\n";
-    return EXIT_SUCCESS;
-  }
-
-  if (vm.count("update-live-traffic")) {
-    // Read the config file
-    boost::property_tree::ptree pt;
-    if (vm.count("config") && filesystem::is_regular_file(config_file_path)) {
-      rapidjson::read_json(config_file_path, pt);
-    } else {
-      std::cerr << "Configuration is required\n\n";
-      return EXIT_FAILURE;
-    }
-
-    customize_live_traffic_data(pt, live_speed);
-    std::cout << "Updated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract") << "\n";
-    return EXIT_SUCCESS;
-  }
-
   return EXIT_FAILURE;
 }
