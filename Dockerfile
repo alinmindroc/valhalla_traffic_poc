@@ -10,10 +10,21 @@ RUN add-apt-repository -y ppa:valhalla-core/valhalla
 RUN apt-get update
 
 # Install build dependencies
-RUN apt-get install -y cmake make libtool pkg-config g++ gcc curl unzip jq lcov protobuf-compiler vim-common locales libboost-all-dev libcurl4-openssl-dev zlib1g-dev liblz4-dev libprime-server-dev libprotobuf-dev prime-server-bin
+RUN apt-get install -y cmake make libtool pkg-config g++ gcc curl unzip jq lcov protobuf-compiler vim-common locales libboost-all-dev libcurl4-openssl-dev zlib1g-dev liblz4-dev libprotobuf-dev
 RUN apt-get install -y libgeos-dev libgeos++-dev libluajit-5.1-dev libspatialite-dev libsqlite3-dev wget sqlite3 spatialite-bin
 RUN apt-get install -y python-is-python3
 RUN apt-get install -y libsqlite3-mod-spatialite python-all-dev git
+
+# Install prime server build dependencies
+RUN apt-get install -y autoconf automake libcurl4-openssl-dev libzmq3-dev libczmq-dev
+
+# Build prime server
+RUN git clone https://github.com/kevinkreiser/prime_server.git
+RUN cd prime_server; git submodule update --init --recursive
+RUN cd prime_server; ./autogen.sh
+RUN cd prime_server; ./configure
+# RUN cd prime_server; make test -j8
+RUN cd prime_server; make install
 
 RUN git clone https://github.com/valhalla/valhalla.git
 # Use a specific commit to avoid breaking this process in the future. Check the readme for details
@@ -29,7 +40,8 @@ COPY valhalla_code_overwrites/src/CMakeLists.txt valhalla/src/CMakeLists.txt
 
 # Build valhalla
 RUN mkdir valhalla/build
-RUN cd valhalla/build; cmake .. -DCMAKE_BUILD_TYPE=Release
+RUN cd valhalla/build; cmake .. -DCMAKE_BUILD_TYPE=Release -DENABLE_SINGLE_FILES_WERROR=False
+# If this fails with `Killed signal terminated program cc1plus`, try increasing docker's memory to 16GB and disk to 200GB
 RUN cd valhalla/build; make -j$(nproc)
 RUN cd valhalla/build; make install
 
@@ -39,6 +51,7 @@ RUN cd valhalla_tiles; wget https://download.geofabrik.de/europe/estonia-latest.
 
 # Generate the config
 RUN cd valhalla_tiles; valhalla_build_config --mjolnir-tile-dir ${PWD}/valhalla_tiles --mjolnir-timezone ${PWD}/valhalla_tiles/timezones.sqlite --mjolnir-admin ${PWD}/valhalla_tiles/admins.sqlite --mjolnir-traffic-extract ${PWD}/traffic.tar > valhalla_raw.json
+
 # Remove unused options to keep service output clean of errors
 RUN cd valhalla_tiles; sed -e '/elevation/d' -e '/tile_extract/d' valhalla_raw.json > valhalla.json
 
