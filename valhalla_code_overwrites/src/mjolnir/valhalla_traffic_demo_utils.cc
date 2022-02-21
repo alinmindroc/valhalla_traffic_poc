@@ -114,7 +114,7 @@ void build_live_traffic_data(const boost::property_tree::ptree& config,
     header.traffic_tile_version = valhalla::baldr::TRAFFIC_TILE_VERSION;
     header.directed_edge_count = tile->header()->directededgecount();
     buffer.write(reinterpret_cast<char*>(&header), sizeof(header));
-    valhalla::baldr::TrafficSpeed dummy_speed = {constant_encoded_speed, constant_encoded_speed, constant_encoded_speed, constant_encoded_speed, 255, 255, 0, 0, 0, 0};
+    valhalla::baldr::TrafficSpeed dummy_speed = {constant_encoded_speed, constant_encoded_speed, constant_encoded_speed, constant_encoded_speed, 255, 255, 1, 2, 3, 0};
     for (uint32_t i = 0; i < header.directed_edge_count; ++i) {
       buffer.write(reinterpret_cast<char*>(&dummy_speed), sizeof(dummy_speed));
     }

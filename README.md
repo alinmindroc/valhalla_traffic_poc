@@ -17,7 +17,7 @@ This has similar interface to existing Valhalla tools and makes use of data stru
    * (takes around 10 min, as it downloads + processes the OSM map for the whole country of Estonia)
 2. Start container `docker run -p 8002:8002 -it valhalla-traffic bash`
     * The port forwarding is important for the demos below
-3. Inside the container, start the server `LD_LIBRARY_PATH=/usr/local/lib valhalla_service /valhalla_tiles/valhalla.json 1`
+3. Inside the container, start the server ```LD_LIBRARY_PATH=/usr/local/lib valhalla_service /valhalla_tiles/valhalla.json 1```
 4. Verify that Valhalla processed the traffic information correctly, by querying the Valhalla graph edge which we updated (or using the interactive demo in the next step):
 ```
 curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq
@@ -37,17 +37,17 @@ Example:
                "way_id":233161449,
                ...
             },
-            "live_speed":{
-               "congestion_2":0.08,
-               "breakpoint_1":0.03,
-               "congestion_1":0.08,
-               "speed_1":40,
-               "congestion_0":0.08,
-               "speed_2":40,
-               "breakpoint_0":0.03,
-               "speed_0":40,
-               "overall_speed":40
-            }
+            "live_speed": {
+              "congestion_2": 0.03,
+              "breakpoint_1": 1,
+              "congestion_1": 0.02,
+              "speed_1": 40,
+              "congestion_0": 0,
+              "speed_2": 40,
+              "breakpoint_0": 1,
+              "speed_0": 40,
+              "overall_speed": 40
+            }      
       ...
 ```
 5. Check interactive demo (uses the locally running instance of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,59.429276,24.776402
@@ -61,7 +61,7 @@ Example:
      ```
    * Restart the service:
       ```
-      valhalla_service /valhalla_tiles/valhalla.json 1
+      LD_LIBRARY_PATH=/usr/local/lib valhalla_service /valhalla_tiles/valhalla.json 1
       ```
    * Confirm that live speeds are not available 
       ```
