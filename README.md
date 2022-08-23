@@ -20,7 +20,7 @@ This has similar interface to existing Valhalla tools and makes use of data stru
 3. Inside the container, start the server ```LD_LIBRARY_PATH=/usr/local/lib valhalla_service /valhalla_tiles/valhalla.json 1```
 4. Verify that Valhalla processed the traffic information correctly, by querying the Valhalla graph edge which we updated (or using the interactive demo in the next step):
 ```
-curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709580728085, "lon": 1.523623466491699}], "verbose": true}' | jq
+curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709, "lon": 1.523623}], "verbose": true}' | jq
 ```
 One of the ways returned by the query should contain a non-empty `predicted_speeds` array for predicted traffic, and a non-empty `live_speed` object for live traffic. This means that Valhalla has the traffic information available.
 
@@ -51,7 +51,7 @@ Example:
             }      
       ...
 ```
-5. Check interactive demo (uses the locally running instance of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,42.510609,1.534503
+5. Check the  interactive demo (uses the locally running instance of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,42.510609,1.534503
    * __Left click__ to place origin / destination for routing
    * __Right click__ to query node/edge info
 6. Do a live update of the traffic speeds and check how it is picked up automatically:
@@ -66,7 +66,7 @@ Example:
       ```
    * Confirm that live speeds are not available 
       ```
-     curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709580728085, "lon": 1.523623466491699}], "verbose": true}' | jq | grep overall_speed
+     curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709, "lon": 1.523623}], "verbose": true}' | jq | grep overall_speed
      ```
    * Customize with new values
      ```
@@ -74,12 +74,12 @@ Example:
      ```
    * Check the live speeds again, should be available now
       ```
-     curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709580728085, "lon": 1.523623466491699}], "verbose": true}' | jq | grep overall_speed
+     curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709, "lon": 1.523623}], "verbose": true}' | jq | grep overall_speed
      ```
 
 ## Predicted traffic Demo
 
-The predicted traffic for the following OSM way is slowed as part of the Dockerfile commands: https://www.openstreetmap.org/way/233161449#map=15/59.4302/24.7748
+The predicted traffic for the following OSM way is slowed as part of the Dockerfile commands: https://www.openstreetmap.org/way/173167308#map=17/42.50676/1.52457
 ![OSM way](screenshots/osm_way.png?raw=true "OSM way")
 
 As live traffic has priority over predicted traffic, make sure all live traffic speeds are set to 0, so they are ignored:
@@ -120,7 +120,7 @@ curl http://localhost:8002/sources_to_targets --data '{"sources":[{"lat":59.431,
 
 ### Isochrone (supports traffic):
 ```
-curl http://localhost:8002/isochrone --data '{"locations":[{"lat":59.431,"lon":24.768}],"costing":"auto","contours":[{"time":5,"color":"ff0000"}],"date_time":{"type":1,"value":"2021-09-30T23:50"}}'
+curl http://localhost:8002/isochrone --data '{"locations":[{"lat": 42.506709, "lon": 1.523623}],"costing":"auto","contours":[{"time":5,"color":"ff0000"}],"date_time":{"type":1,"value":"2021-09-30T23:50"}}'
 ```
 View isochrone: http://geojson.io/
 
