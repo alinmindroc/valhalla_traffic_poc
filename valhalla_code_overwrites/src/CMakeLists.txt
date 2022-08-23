@@ -9,7 +9,7 @@ if(NOT VALHALLA_SOURCE_DIR)
 endif()
 
 ## Get Valhalla version
-file(STRINGS "${VALHALLA_SOURCE_DIR}/valhalla/valhalla.h.in" version_lines REGEX "VALHALLA_VERSION_(MAJOR|MINOR|PATCH)")
+file(STRINGS "${VALHALLA_SOURCE_DIR}/valhalla/valhalla.h" version_lines REGEX "VALHALLA_VERSION_(MAJOR|MINOR|PATCH)")
 foreach(line ${version_lines})
   if("${line}" MATCHES "(VALHALLA_VERSION_(MAJOR|MINOR|PATCH))[\t ]+([0-9]+)")
     set(${CMAKE_MATCH_1} ${CMAKE_MATCH_3})
@@ -168,11 +168,9 @@ if(ENABLE_DATA_TOOLS)
 endif()
 
 ## libvalhalla
-configure_file(../valhalla/valhalla.h.in ${CMAKE_CURRENT_BINARY_DIR}/valhalla/valhalla.h @ONLY)
-configure_file(../valhalla/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/valhalla/config.h @ONLY)
 
 set(valhalla_hdrs
-    ${CMAKE_CURRENT_BINARY_DIR}/valhalla/valhalla.h
+    ${VALHALLA_SOURCE_DIR}/valhalla/valhalla.h
     ${VALHALLA_SOURCE_DIR}/valhalla/worker.h
     ${VALHALLA_SOURCE_DIR}/valhalla/filesystem.h
     ${VALHALLA_SOURCE_DIR}/valhalla/proto_conversions.h
@@ -182,7 +180,7 @@ set(valhalla_src
     worker.cc
     filesystem.cc
     proto_conversions.cc
-    ${CMAKE_CURRENT_BINARY_DIR}/valhalla/config.h
+    ${VALHALLA_SOURCE_DIR}/valhalla/config.h
     ${valhalla_hdrs}
     ${libvalhalla_link_objects})
 
@@ -258,7 +256,6 @@ if(BUILD_SHARED_LIBS)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${LIBVALHALLA_SO_LINK}
     DESTINATION "${CMAKE_INSTALL_LIBDIR}"
     COMPONENT development)
-
   if(UNIX)
     add_custom_target(${LIBVALHALLA_SO_LINK} ALL
       COMMAND ${CMAKE_COMMAND} -E create_symlink "${LIBVALHALLA_SO_LINK}.${VALHALLA_VERSION_MAJOR}" ${LIBVALHALLA_SO_LINK})

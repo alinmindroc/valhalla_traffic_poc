@@ -14,13 +14,13 @@ This has similar interface to existing Valhalla tools and makes use of data stru
 ## How to run
 
 1. Build the docker image `docker build -t valhalla-traffic .` 
-   * (takes around 10 min, as it downloads + processes the OSM map for the whole country of Estonia)
+   * (takes around 10 min, as it compiles valhalla and its dependency prime server + downloads and processes the OSM map for Andorra)
 2. Start container `docker run -p 8002:8002 -it valhalla-traffic bash`
     * The port forwarding is important for the demos below
 3. Inside the container, start the server ```LD_LIBRARY_PATH=/usr/local/lib valhalla_service /valhalla_tiles/valhalla.json 1```
 4. Verify that Valhalla processed the traffic information correctly, by querying the Valhalla graph edge which we updated (or using the interactive demo in the next step):
 ```
-curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq
+curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709580728085, "lon": 1.523623466491699}], "verbose": true}' | jq
 ```
 One of the ways returned by the query should contain a non-empty `predicted_speeds` array for predicted traffic, and a non-empty `live_speed` object for live traffic. This means that Valhalla has the traffic information available.
 
@@ -28,13 +28,14 @@ Example:
 ```
 [
    {
-      "input_lon":24.771085,
-      "input_lat":59.430463,
-      "edges":[
+    "input_lon": 1.523623,
+    "input_lat": 42.50671,
+    ...
+    "edges":[
          {
             "predicted_speeds":[6, 6, 6, 6, 6, 6, ... ],
             "edge_info":{
-               "way_id":233161449,
+               "way_id":173167308,
                ...
             },
             "live_speed": {
@@ -50,7 +51,7 @@ Example:
             }      
       ...
 ```
-5. Check interactive demo (uses the locally running instance of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,59.429276,24.776402
+5. Check interactive demo (uses the locally running instance of Valhalla): https://valhalla.github.io/demos/routing/index-internal.html#loc=15,42.510609,1.534503
    * __Left click__ to place origin / destination for routing
    * __Right click__ to query node/edge info
 6. Do a live update of the traffic speeds and check how it is picked up automatically:
@@ -65,7 +66,7 @@ Example:
       ```
    * Confirm that live speeds are not available 
       ```
-     curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq | grep overall_speed
+     curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709580728085, "lon": 1.523623466491699}], "verbose": true}' | jq | grep overall_speed
      ```
    * Customize with new values
      ```
@@ -73,7 +74,7 @@ Example:
      ```
    * Check the live speeds again, should be available now
       ```
-     curl http://localhost:8002/locate --data '{"locations": [{"lat": 59.430462989308495, "lon": 24.771084543317553}], "verbose": true}' | jq | grep overall_speed
+     curl http://localhost:8002/locate --data '{"locations": [{"lat": 42.506709580728085, "lon": 1.523623466491699}], "verbose": true}' | jq | grep overall_speed
      ```
 
 ## Predicted traffic Demo
