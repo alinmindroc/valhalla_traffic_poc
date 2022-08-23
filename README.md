@@ -109,37 +109,37 @@ Check the `GetSpeed` function in `baldr/graphtile.h` for validation of live traf
 
 ### Route (supports traffic):
 ```
-curl http://localhost:8002/route --data '{"locations":[{"lat":59.431,"lon":24.768},{"lat":59.43,"lon":24.776}],"costing":"auto","directions_options":{"units":"meters"}}' | jq
+curl http://localhost:8002/route --data '{"locations":[{"lat":42.505884,"lon":1.520732},{"lat":42.50885,"lon":1.528551}],"costing":"auto","directions_options":{"units":"meters"}}' | jq
 ```
 Decode polyline6: http://valhalla.github.io/demos/polyline/
 
 ### DistanceMatrix (Doesn't support traffic):
 ```
-curl http://localhost:8002/sources_to_targets --data '{"sources":[{"lat":59.431,"lon":24.768},{"lat":59.43,"lon":24.776},{"lat":59.433851,"lon":24.770216}], "targets":[{"lat":59.429696,"lon":24.759521},{"lat":59.424097,"lon":24.778592},{"lat":59.42268,"lon":24.745916}],"costing":"auto","directions_options":{"units":"kilometers"},"date_time":{"type":1,"value":"2021-08-30T23:50"}}' | jq
+curl http://localhost:8002/sources_to_targets --data '{"sources":[{"lat":42.505884,"lon":1.520732},{"lat":42.50885,"lon":1.528551},{"lat":42.508282,"lon":1.521729}], "targets":[{"lat":42.506076,"lon":1.517199},{"lat":42.509775,"lon":1.525169},{"lat":42.501021,"lon":1.51791}],"costing":"auto","directions_options":{"units":"kilometers"},"date_time":{"type":1,"value":"2021-08-30T23:50"}}' | jq
 ```
 
 ### Isochrone (supports traffic):
 ```
-curl http://localhost:8002/isochrone --data '{"locations":[{"lat": 42.506709, "lon": 1.523623}],"costing":"auto","contours":[{"time":5,"color":"ff0000"}],"date_time":{"type":1,"value":"2021-09-30T23:50"}}'
+curl http://localhost:8002/isochrone --data '{"locations":[{"lat": 42.506709, "lon": 1.523623}],"costing":"auto","contours":[{"time":5,"color":"ff0000"}],"date_time":{"type":1,"value":"2021-09-30T23:50"}}' | jq
 ```
 View isochrone: http://geojson.io/
 
 ### Locate
-Used to match a single point to the nearest road:
+Used to match a single point to the nearest road: (click on the map, get a green point -> click on the green point to get info)
 http://valhalla.github.io/demos/locate/
 
 Or cmd line:
 
 ```
-curl http://localhost:8002/locate --data '{"locations":[{"lat":59.429385,"lon":24.757191},{"lat":59.429214,"lon":24.757529}]}'
+curl http://localhost:8002/locate --data '{"locations":[{"lat":42.505884,"lon":1.520732},{"lat":42.508282,"lon":1.521729}]}' | jq
 ```
 
 ### Map match
 
 ```
-curl http://localhost:8002/trace_route --data '{"shape":[{"lat":59.429385,"lon":24.757191,"type":"break"},{"lat":59.429214,"lon":24.757529,"type":"break"}],"costing":"auto","shape_match":"map_snap"}'
+curl http://localhost:8002/trace_route --data '{"shape":[{"lat":42.505884,"lon":1.520732,"type":"break"},{"lat":42.508282,"lon":1.521729,"type":"break"}],"costing":"auto","shape_match":"map_snap"}' | jq
 
-curl http://localhost:8002/trace_attributes --data '{"shape":[{"lat":59.429385,"lon":24.757191,"type":"break"},{"lat":59.429214,"lon":24.757529,"type":"break"}],"costing":"auto","shape_match":"map_snap"}'
+curl http://localhost:8002/trace_attributes --data '{"shape":[{"lat":42.505884,"lon":1.520732,"type":"break"},{"lat":42.508282,"lon":1.521729,"type":"break"}],"costing":"auto","shape_match":"map_snap"}' | jq
 ```
 
 ## Possible workflow for generating traffic based on lat/lng input data
