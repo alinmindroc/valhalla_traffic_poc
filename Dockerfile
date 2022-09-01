@@ -46,7 +46,7 @@ RUN cd valhalla/build; make install
 
 # Generate routing tiles
 RUN mkdir valhalla_tiles
-RUN cd valhalla_tiles; wget https://download.geofabrik.de/europe/andorra-latest.osm.pbf -O andorra.osm.pbf
+RUN cd valhalla_tiles; wget --no-check-certificate https://download.geofabrik.de/europe/andorra-latest.osm.pbf -O andorra.osm.pbf
 
 # Generate the config
 RUN cd valhalla_tiles; valhalla_build_config --mjolnir-tile-dir ${PWD}/valhalla_tiles --mjolnir-timezone ${PWD}/valhalla_tiles/timezones.sqlite --mjolnir-admin ${PWD}/valhalla_tiles/admins.sqlite --mjolnir-traffic-extract ${PWD}/traffic.tar > valhalla_raw.json

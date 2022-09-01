@@ -3,6 +3,7 @@
 #include "baldr/rapidjson_utils.h"
 #include "filesystem.h"
 #include "mjolnir/graphtilebuilder.h"
+#include "rapidjson/document.h"
 
 #include <cstdint>
 #include <cxxopts.hpp>
@@ -11,23 +12,23 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-#include "microtar.h"
+#include <fstream>
+#include <iostream>
+
 #include "config.h"
+#include "microtar.h"
 
-namespace vm = valhalla::midgard;
-namespace vb = valhalla::baldr;
-namespace vj = valhalla::mjolnir;
-
-// Mmap and mtar structs copied from test/test.cc
+// Mmap and mtar structs copied from test/test.cc.
 struct MMap {
   MMap(const char* filename) {
     fd = open(filename, O_RDWR);
     struct stat s;
+
 #ifdef _MSC_VER
-    _fstat64(fd, &s);
-#else
-    fstat(fd, &s);
+#define fstat(fd, s) _fstat64(fd, s)
 #endif
+    fstat(fd, &s);
+
     data = mmap(0, s.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     length = s.st_size;
   }
@@ -114,7 +115,16 @@ void build_live_traffic_data(const boost::property_tree::ptree& config,
     header.traffic_tile_version = valhalla::baldr::TRAFFIC_TILE_VERSION;
     header.directed_edge_count = tile->header()->directededgecount();
     buffer.write(reinterpret_cast<char*>(&header), sizeof(header));
-    valhalla::baldr::TrafficSpeed dummy_speed = {constant_encoded_speed, constant_encoded_speed, constant_encoded_speed, constant_encoded_speed, 255, 255, 1, 2, 3, 0};
+    valhalla::baldr::TrafficSpeed dummy_speed = {constant_encoded_speed,
+                                                 constant_encoded_speed,
+                                                 constant_encoded_speed,
+                                                 constant_encoded_speed,
+                                                 255,
+                                                 255,
+                                                 1,
+                                                 2,
+                                                 3,
+                                                 0};
     for (uint32_t i = 0; i < header.directed_edge_count; ++i) {
       buffer.write(reinterpret_cast<char*>(&dummy_speed), sizeof(dummy_speed));
     }
@@ -145,50 +155,125 @@ void build_live_traffic_data(const boost::property_tree::ptree& config,
 void customize_live_traffic_data(const boost::property_tree::ptree& config,
                                  uint32_t constant_encoded_speed) {
   // Now we have the tar-file and can go ahead with per edge customizations
-  {
-    const auto memory =
-        std::make_shared<MMap>(config.get<std::string>("mjolnir.traffic_extract").c_str());
+  const auto memory =
+      std::make_shared<MMap>(config.get<std::string>("mjolnir.traffic_extract").c_str());
 
-    mtar_t tar;
-    tar.pos = 0;
-    tar.stream = memory->data;
-    tar.read = [](mtar_t* tar, void* data, unsigned size) -> int {
-      memcpy(data, reinterpret_cast<char*>(tar->stream) + tar->pos, size);
-      return MTAR_ESUCCESS;
-    };
-    tar.write = [](mtar_t* tar, const void* data, unsigned size) -> int {
-      memcpy(reinterpret_cast<char*>(tar->stream) + tar->pos, data, size);
-      return MTAR_ESUCCESS;
-    };
-    tar.seek = [](mtar_t* /*tar*/, unsigned /*pos*/) -> int { return MTAR_ESUCCESS; };
-    tar.close = [](mtar_t * /*tar*/) -> int { return MTAR_ESUCCESS; };
+  mtar_t tar;
+  tar.pos = 0;
+  tar.stream = memory->data;
+  tar.read = [](mtar_t* tar, void* data, unsigned size) -> int {
+    memcpy(data, reinterpret_cast<char*>(tar->stream) + tar->pos, size);
+    return MTAR_ESUCCESS;
+  };
+  tar.write = [](mtar_t* tar, const void* data, unsigned size) -> int {
+    memcpy(reinterpret_cast<char*>(tar->stream) + tar->pos, data, size);
+    return MTAR_ESUCCESS;
+  };
+  tar.seek = [](mtar_t* /*tar*/, unsigned /*pos*/) -> int { return MTAR_ESUCCESS; };
+  tar.close = [](mtar_t * /*tar*/) -> int { return MTAR_ESUCCESS; };
 
-    // Read every speed tile, and update it with fixed speed of `new_speed` km/h (original speeds are
-    // 10km/h)
-    valhalla::baldr::GraphReader reader(config.get_child("mjolnir"));
-    mtar_header_t tar_header;
-    while ((mtar_read_header(&tar, &tar_header)) != MTAR_ENULLRECORD) {
-      valhalla::baldr::TrafficTile tile(
-          std::make_unique<MMapGraphMemory>(memory,
-                                            reinterpret_cast<char*>(tar.stream) + tar.pos +
-                                                sizeof(mtar_raw_header_t_),
-                                            tar_header.size));
+  // Read every speed tile, and update it with fixed speed of `new_speed` km/h (original speeds are
+  // 10km/h)
+  valhalla::baldr::GraphReader reader(config.get_child("mjolnir"));
+  mtar_header_t tar_header;
+  while ((mtar_read_header(&tar, &tar_header)) != MTAR_ENULLRECORD) {
+    valhalla::baldr::TrafficTile tile(
+        std::make_unique<MMapGraphMemory>(memory,
+                                          reinterpret_cast<char*>(tar.stream) + tar.pos +
+                                              sizeof(mtar_raw_header_t_),
+                                          tar_header.size));
 
-      valhalla::baldr::GraphId tile_id(tile.header->tile_id);
+    valhalla::baldr::GraphId tile_id(tile.header->tile_id);
 
-      for (uint32_t index = 0; index < tile.header->directed_edge_count; index++) {
-        valhalla::baldr::TrafficSpeed* current =
-            const_cast<valhalla::baldr::TrafficSpeed*>(tile.speeds + index);
-        current->overall_encoded_speed = constant_encoded_speed;
-        current->breakpoint1 = 255;
-      }
-      mtar_next(&tar);
+    for (uint32_t index = 0; index < tile.header->directed_edge_count; index++) {
+      valhalla::baldr::TrafficSpeed* current =
+          const_cast<valhalla::baldr::TrafficSpeed*>(tile.speeds + index);
+      current->overall_encoded_speed = constant_encoded_speed;
+      const int encoded_speed_full_edge_length = 255;
+      current->breakpoint1 =
+          encoded_speed_full_edge_length; // the encoded speed is across the full length of the edge
     }
+    mtar_next(&tar);
   }
 }
 
+int handle_help(cxxopts::Options options) {
+  std::cout << options.help() << std::endl;
+  return EXIT_SUCCESS;
+}
+
+int handle_get_traffic_dir(uint64_t way_id) {
+  valhalla::baldr::GraphId graph_id(way_id);
+  auto tile_path = GraphTile::FileSuffix(graph_id);
+  auto dir = filesystem::path(tile_path);
+  auto dir_str = dir.string();
+  boost::replace_all(dir_str, ".gph", ".csv");
+  std::cout << dir_str << std::endl;
+
+  return EXIT_SUCCESS;
+}
+
+int handle_get_tile_id(uint64_t way_id) {
+  valhalla::baldr::GraphId graph_id(way_id);
+  std::cout << graph_id << std::endl;
+
+  return EXIT_SUCCESS;
+}
+
+int handle_generate_predicted_traffic(float predicted_speed) {
+  const int five_minute_buckets_per_week_count = 7 * 24 * 60 / 5;
+  std::array<float, five_minute_buckets_per_week_count> historical{};
+  historical.fill(predicted_speed);
+
+  auto speeds = valhalla::baldr::compress_speed_buckets(historical.data());
+  std::cout << valhalla::baldr::encode_compressed_speeds(speeds.data()) << std::endl;
+
+  return EXIT_SUCCESS;
+}
+
+int handle_generate_live_traffic(cxxopts::ParseResult cmd_args, std::string config_file_path) {
+  // Read the config file
+  boost::property_tree::ptree pt;
+  if (cmd_args.count("config") && filesystem::is_regular_file(config_file_path)) {
+    rapidjson::read_json(config_file_path, pt);
+  } else {
+    std::cerr << "Configuration is required" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  std::vector<std::string> live_trafic_params =
+      cmd_args["generate-live-traffic"].as<std::vector<std::string>>();
+
+  std::string tile_id = live_trafic_params[0];
+  uint32_t encoded_speed = static_cast<uint32_t>(std::stoul(live_trafic_params[1]));
+  uint64_t traffic_update_timestamp = static_cast<uint64_t>(std::stoull(live_trafic_params[2]));
+
+  build_live_traffic_data(pt, tile_id, encoded_speed, traffic_update_timestamp);
+  std::cout << "Generated traffic.tar succesfully at "
+            << pt.get<std::string>("mjolnir.traffic_extract") << std::endl;
+  return EXIT_SUCCESS;
+}
+
+int handle_update_live_traffic(cxxopts::ParseResult cmd_args,
+                               std::string config_file_path,
+                               uint32_t live_speed) {
+  // Read the config file
+  boost::property_tree::ptree pt;
+  if (cmd_args.count("config") && filesystem::is_regular_file(config_file_path)) {
+    rapidjson::read_json(config_file_path, pt);
+  } else {
+    std::cerr << "Configuration is required" << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  customize_live_traffic_data(pt, live_speed);
+  std::cout << "Updated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract")
+            << std::endl;
+  return EXIT_SUCCESS;
+}
+
 int main(int argc, char** argv) {
-  //args
+  // args
   uint64_t way_id;
   float predicted_speed;
   uint32_t live_speed;
@@ -217,79 +302,33 @@ int main(int argc, char** argv) {
     auto result = options.parse(argc, argv);
 
     if (result.count("help")) {
-      std::cout << options.help() << "\n";
-      return EXIT_SUCCESS;
+      return handle_help(options);
     }
 
     if (result.count("get-traffic-dir")) {
-      valhalla::baldr::GraphId graph_id(way_id);
-      auto tile_path = GraphTile::FileSuffix(graph_id);
-      auto dir = filesystem::path(tile_path);
-      auto dir_str = dir.string();
-      boost::replace_all(dir_str, ".gph", ".csv");
-      std::cout << dir_str << "\n";
-
-      return EXIT_SUCCESS;
+      return handle_get_traffic_dir(way_id);
     }
 
     if (result.count("get-tile-id")) {
-      valhalla::baldr::GraphId graph_id(way_id);
-      std::cout << graph_id << "\n";
-
-      return EXIT_SUCCESS;
+      return handle_get_tile_id(way_id);
     }
 
     if (result.count("generate-predicted-traffic")) {
-      const int five_minute_buckets_per_week_count = 7 * 24 * 60 / 5;
-      std::array<float, five_minute_buckets_per_week_count> historical{};
-      historical.fill(predicted_speed);
-
-      auto speeds = valhalla::baldr::compress_speed_buckets(historical.data());
-      std::cout << valhalla::baldr::encode_compressed_speeds(speeds.data()) << "\n";
-
-      return EXIT_SUCCESS;
+      return handle_generate_predicted_traffic(predicted_speed);
     }
 
     if (result.count("generate-live-traffic")) {
-      // Read the config file
-      boost::property_tree::ptree pt;
-      if (result.count("config") && filesystem::is_regular_file(config_file_path)) {
-        rapidjson::read_json(config_file_path, pt);
-      } else {
-        std::cerr << "Configuration is required\n\n";
-        return EXIT_FAILURE;
-      }
-
-      std::vector<std::string> live_trafic_params = result["generate-live-traffic"].as<std::vector<std::string>>();
-
-      std::string tile_id = live_trafic_params[0];
-      uint32_t encoded_speed = static_cast<uint32_t>(std::stoul(live_trafic_params[1]));
-      uint64_t traffic_update_timestamp = static_cast<uint32_t>(std::stoul(live_trafic_params[2]));
-
-      build_live_traffic_data(pt, tile_id, encoded_speed, traffic_update_timestamp);
-      std::cout << "Generated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract") << "\n";
-      return EXIT_SUCCESS;
+      return handle_generate_live_traffic(result, config_file_path);
     }
 
     if (result.count("update-live-traffic")) {
-      // Read the config file
-      boost::property_tree::ptree pt;
-      if (result.count("config") && filesystem::is_regular_file(config_file_path)) {
-        rapidjson::read_json(config_file_path, pt);
-      } else {
-        std::cerr << "Configuration is required\n\n";
-        return EXIT_FAILURE;
-      }
-
-      customize_live_traffic_data(pt, live_speed);
-      std::cout << "Updated traffic.tar succesfully at " << pt.get<std::string>("mjolnir.traffic_extract") << "\n";
-      return EXIT_SUCCESS;
+      return handle_update_live_traffic(result, config_file_path, live_speed);
     }
 
-    std::cout << options.help() << "\n";
+    std::cout << options.help() << std::endl;
 
   } catch (cxxopts::OptionException& e) {
-    std::cerr << "Unable to parse command line options because: " << e.what() << "\n";
+    std::cerr << "Unable to parse command line options because: " << e.what() << std::endl;
     return EXIT_FAILURE;
   }
   return EXIT_FAILURE;
