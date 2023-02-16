@@ -2,7 +2,7 @@
 
 Valhalla is an open source routing engine, with support for time-dependent routing and traffic. 
 
-It doesn't have at the moment any official step-by-step instructions on how to add traffic support, only a description of the feature: https://valhalla.readthedocs.io/en/latest/thor/simple_traffic/
+It doesn't have at the moment any official step-by-step instructions on how to add traffic support, only a description of the feature: https://valhalla.readthedocs.io/thor/simple_traffic/
 
 This repository shows how to create an instance of Valhalla with both types of supported traffic information:
 1. __Predicted traffic__, used for time-based routing (e.g. _find a route between A and B that leaves tomorrow at 12:00_). This is done through a CSV which contains encoded speeds for a whole week for a given Valhalla graph edge.
