@@ -27,11 +27,11 @@ edges = mapping.split(",")[1:]
 edge_ids = [edges[i] for i in range(len(edges)) if i % 2 == 1]
 
 # Create the traffic.csv file. Format is:
-# edge_id, constrained flow speed (night), free flow speed (day), predicted traffic speeds.
+# edge_id, free flow speed (night), constrained flow speed (day), predicted traffic speeds.
 traffic_encoded_values = subprocess.run(['valhalla_traffic_demo_utils', '--generate-predicted-traffic', str(PREDICTED_SPEED)], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
 
 with open ("traffic.csv", "w", newline='') as csvfile:
     csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
     for edge_id in edge_ids:
         tile_id = subprocess.run(['valhalla_traffic_demo_utils', '--get-tile-id', edge_id], stdout=subprocess.PIPE).stdout.decode('utf-8').strip()
-        csv_writer.writerow([tile_id, CONSTRAINED_FLOW_SPEED, FREE_FLOW_SPEED, traffic_encoded_values])
+        csv_writer.writerow([tile_id, FREE_FLOW_SPEED, CONSTRAINED_FLOW_SPEED, traffic_encoded_values])
