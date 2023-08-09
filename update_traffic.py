@@ -16,7 +16,7 @@ way_edges_path = sys.argv[2]
 mapping = ""
 
 for line in open(way_edges_path):
-    if osm_way_id in line:
+    if(line.startswith(osm_way_id)):
         mapping = line.strip()
         break
 
